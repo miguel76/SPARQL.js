@@ -366,6 +366,7 @@ PNAME_NS              {PN_PREFIX}?":"
 PNAME_LN              {PNAME_NS}{PN_LOCAL}
 BLANK_NODE_LABEL      "_:"(?:{PN_CHARS_U}|[0-9])(?:(?:{PN_CHARS}|".")*{PN_CHARS})?
 VAR                   [\?\$]{VARNAME}
+INPUTNAME             \&{VARNAME}
 LANGTAG               "@"[a-zA-Z]+(?:"-"[a-zA-Z0-9]+)*
 INTEGER               [0-9]+
 DECIMAL               [0-9]*"."[0-9]+
@@ -427,6 +428,7 @@ PN_LOCAL_ESC          "\\"("_"|"~"|"."|"-"|"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"
 "LIMIT"                  return 'LIMIT'
 "OFFSET"                 return 'OFFSET'
 "VALUES"                 return 'VALUES'
+"INPUT"                  return 'INPUT'
 ";"                      return ';'
 "LOAD"                   return 'LOAD'
 "SILENT"                 return 'SILENT'
@@ -502,6 +504,7 @@ PN_LOCAL_ESC          "\\"("_"|"~"|"."|"-"|"!"|"$"|"&"|"'"|"("|")"|"*"|"+"|","|"
 {PNAME_LN}               return 'PNAME_LN'
 {BLANK_NODE_LABEL}       return 'BLANK_NODE_LABEL'
 {VAR}                    return 'VAR'
+{INPUTNAME}              return 'INPUTNAME'
 {LANGTAG}                return 'LANGTAG'
 {INTEGER}                return 'INTEGER'
 {DECIMAL}                return 'DECIMAL'
@@ -811,7 +814,7 @@ GraphPatternNotTriples
     | 'BIND' '(' Expression 'AS' VAR ')' -> { type: 'bind', variable: toVar($5), expression: $3 }
     | 'BIND' '(' VarTriple 'AS' VAR ')' -> ensureSparqlStar({ type: 'bind', variable: toVar($5), expression: $3 })
     | ValuesClause
-    | 'INPUT' VAR -> { type: 'input', variable: toVar($2) }
+    | 'INPUT' INPUTNAME -> { type: 'input', name: $2.substr(1) }
     ;
 Constraint
     : BrackettedExpression
