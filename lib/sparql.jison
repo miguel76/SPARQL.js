@@ -814,7 +814,7 @@ GraphPatternNotTriples
     | 'BIND' '(' Expression 'AS' VAR ')' -> { type: 'bind', variable: toVar($5), expression: $3 }
     | 'BIND' '(' VarTriple 'AS' VAR ')' -> ensureSparqlStar({ type: 'bind', variable: toVar($5), expression: $3 })
     | ValuesClause
-    | 'INPUT' INPUTNAME -> { type: 'input', name: $2.substr(1) }
+    | 'INPUT'? INPUTNAME -> { type: 'input', name: $2.substr(1) }
     ;
 Constraint
     : BrackettedExpression

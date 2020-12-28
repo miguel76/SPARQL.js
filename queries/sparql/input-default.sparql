@@ -4,7 +4,7 @@ PREFIX ns:   <http://example.org/ns#>
 
 SELECT ?book ?title ?price
 {
-   INPUT &_ .
+   &_ .
    ?book dc:title ?title ;
          ns:price ?price .
 }
