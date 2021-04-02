@@ -50,6 +50,30 @@ describe('A SPARQL parser', function () {
     expect(error.message).toContain("Projection of ungrouped variable (?o)");
   });
 
+  describe('with variable group checks disabled', function() {
+    // We should remove this flag when https://github.com/RubenVerborgh/SPARQL.js/issues/120 is resolved
+    var parserWithoutValidation = new SparqlParser({skipUngroupedVariableCheck:true});
+
+    // Ensure the same blank node identifiers are used in every test
+    beforeEach(function () { parser._resetBlanks(); });
+
+    it('should not throw ungrouped-variable error on a valid query', function () {
+      var query = 'PREFIX : <http://www.example.org/> SELECT ?o WHERE { ?s ?p ?o } GROUP BY ?s';
+      // When `skipUngroupedVariableCheck` is false, this call would throw:
+      // `Projection of ungrouped variable (?s)`
+      var groups = parserWithoutValidation.parse(query).where;
+      expect(groups[0].type).toBe("bgp");
+    });
+
+    it('should not throw undefined-property error on a valid query', function () {
+      var query = 'select (?x as ?xString) (count(?y) as ?count) { ?x ?y ?z }';
+      // When `skipUngroupedVariableCheck` is false, the thrown error would be:
+      // `Cannot read property 'map' of undefined`
+      var groups = parserWithoutValidation.parse(query).where;
+      expect(groups[0].type).toBe("bgp");
+    });
+  })
+
   it('should throw an error on a use of an ungrouped variable for a projection of an operation', function () {
     var query = 'PREFIX : <http://www.example.org/> SELECT ?o (?o + ?p AS ?c) WHERE { ?s ?p ?o } GROUP BY (?o)';
     var error = null;
@@ -141,13 +165,27 @@ describe('A SPARQL parser', function () {
 
     it('should use the base IRI', function () {
       var query = 'SELECT * { <> <#b> "" }';
-      var result = '{"subject":{"termType":"NamedNode","value":"http://ex.org/"},"predicate":{"termType":"NamedNode","value":""},"object":{"termType":"Literal","value":"","language":"","datatype":{"termType":"NamedNode","value":"http://www.w3.org/2001/XMLSchema#string"}}}';
       var result = {subject: dataFactory.namedNode("http://ex.org/"),
         predicate: dataFactory.namedNode("http://ex.org/#b"),
         object: dataFactory.literal("")
       };
 
       expect(parser.parse(query).where[0].triples[0]).toEqualParsedQuery(result);
+    });
+
+    it('should work after a previous query failed', function () {
+      var badQuery = 'SELECT * { <> <#b> "" } invalid!';
+      expect(() => parser.parse(badQuery)).toThrow(Error);
+
+      var goodQuery = 'SELECT * { <> <#b> "" }';
+
+      parser = new SparqlParser({ baseIRI: 'http://ex2.org/' });
+      var result = {subject: dataFactory.namedNode("http://ex2.org/"),
+        predicate: dataFactory.namedNode("http://ex2.org/#b"),
+        object: dataFactory.literal("")
+      };
+      var data = parser.parse(goodQuery);
+      expect(data.where[0].triples[0]).toEqualParsedQuery(result);
     });
   });
 
@@ -164,7 +202,6 @@ describe('A SPARQL parser', function () {
   describe('with group collapsing disabled', function () {
     it('should keep explicit pattern group', function () {
       var query = 'SELECT * WHERE { { ?s ?p ?o } ?a ?b ?c }';
-      var result = ',"object":{"termType":"Variable","value":"c"}}]}]';
       var result = [
         {
           type: "group",
@@ -225,6 +262,163 @@ describe('A SPARQL parser', function () {
         'SELECT * WHERE { BIND(<< <ex:s> <ex:p> 42 >> as ?x) }'
       )).toThrow(expectedErrorMessage);
     });
+  });
+
+  describe('for update queries', () => {
+    it('should throw on blank nodes in DELETE clause', function () {
+      var query = 'DELETE { ?a <ex:knows> [] . } WHERE { ?a <ex:knows> "Alan" . }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal blank node in BGP');
+    });
+
+    it('should not throw on blank nodes in INSERT clause', function () {
+      var query = 'INSERT { ?a <ex:knows> [] . } WHERE { ?a <ex:knows> "Alan" . }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).toBeNull();
+    });
+
+    it('should throw on blank nodes in compact DELETE clause', function () {
+      var query = 'DELETE WHERE { _:a <ex:p> <ex:o> }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal blank node in BGP');
+    });
+
+    it('should throw on variables in DELETE DATA clause', function () {
+      var query = 'DELETE DATA { ?a <ex:p> <ex:o> }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal variable in BGP');
+    });
+
+    it('should throw on blank nodes in DELETE DATA clause', function () {
+      var query = 'DELETE DATA { _:a <ex:p> <ex:o> }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal blank node in BGP');
+    });
+
+    it('should throw on variables in DELETE DATA clause with GRAPH', function () {
+      var query = 'DELETE DATA { GRAPH ?a { <ex:s> <ex:p> <ex:o> } }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal variable in GRAPH');
+    });
+
+    it('should throw on variables in INSERT DATA clause', function () {
+      var query = 'INSERT DATA { ?a <ex:p> <ex:o> }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal variable in BGP');
+    });
+
+    it('should throw on variables in DELETE DATA clause with GRAPH', function () {
+      var query = 'DELETE DATA { GRAPH ?a { <ex:s> <ex:p> <ex:o> } }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected illegal variable in GRAPH');
+    });
+
+    it('should not throw on reused blank nodes in one INSERT DATA clause', function () {
+      var query = 'INSERT DATA { _:a <ex:p> <ex:o> . _:a <ex:p> <ex:o> . }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).toBeNull();
+    });
+
+    it('should throw on reused blank nodes across INSERT DATA clauses', function () {
+      var query = 'INSERT DATA { _:a <ex:p> <ex:o> }; INSERT DATA { _:a <ex:p> <ex:o> }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected reuse blank node across different INSERT DATA clauses');
+    });
+
+    it('should throw on reused blank nodes across INSERT DATA clauses with GRAPH', function () {
+      var query = 'INSERT DATA { _:a <ex:p> <ex:o> }; INSERT DATA { GRAPH <ex:g> { _:a <ex:p> <ex:o> } }', error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Detected reuse blank node across different INSERT DATA clauses');
+    });
+
+    it('should not throw on comment between INSERT and DATA', function () {
+      var query = `INSERT
+# Comment
+DATA { GRAPH <ex:G> { <ex:s> <ex:p> 'o1', 'o2', 'o3' } }`, error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).toBeNull();
+    });
+
+    it('should not throw on comment after INSERT that could be confused with DATA', function () {
+      var query = `INSERT # DATA
+DATA { GRAPH <ex:G> { <ex:s> <ex:p> 'o1', 'o2', 'o3' } }`, error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).toBeNull();
+    });
+
+    it('should throw on commented DATA after INSERT', function () {
+      var query = `INSERT # DATA { GRAPH <ex:G> { <ex:s> <ex:p> 'o1', 'o2', 'o3' } }`, error = null;
+      try { parser.parse(query); }
+      catch (e) { error = e; }
+
+      expect(error).not.toBeUndefined();
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain('Parse error');
+    });
+  });
+
+  it('should throw an error on unicode codepoint escaping in literal with partial surrogate pair', function () {
+    var query = "SELECT * WHERE { ?s <ex:p> '\uD800' }";
+    var error = null;
+    try { parser.parse(query); }
+    catch (e) { error = e; }
+
+    expect(error).not.toBeUndefined();
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain("Invalid unicode codepoint of surrogate pair without corresponding codepoint");
+  });
+
+  it('should not throw an error on unicode codepoint escaping in literal with complete surrogate pair', function () {
+    var query = "SELECT * WHERE { ?s <ex:p> '\uD800\uDFFF' }";
+    var error = null;
+    try { parser.parse(query); }
+    catch (e) { error = e; }
+
+    expect(error).toBeNull();
   });
 });
 
