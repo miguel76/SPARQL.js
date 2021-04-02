@@ -1,8 +1,8 @@
 {
-  "name": "sparqljs",
-  "version": "3.4.1",
-  "description": "A parser for the SPARQL query language",
-  "author": "Ruben Verborgh <ruben.verborgh@gmail.com>",
+  "name": "sparqljs-input",
+  "version": "4.1.0",
+  "description": "A fork of the SPARQL.js parser for the SPARQL query language (based on version 3.2.0), extended to allow input patterns",
+  "author": "Miguel Ceriani <miguel.ceriani@gmail.com>",
   "keywords": [
     "sparql",
     "rdf",
@@ -12,10 +12,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/RubenVerborgh/SPARQL.js.git"
+    "url": "https://github.com/miguel76/SPARQL.js.git"
   },
   "bugs": {
-    "url": "https://github.com/RubenVerborgh/SPARQL.js/issues"
+    "url": "https://github.com/miguel76/SPARQL.js/issues"
   },
   "main": "sparql.js",
   "bin": "bin/sparql-to-json",

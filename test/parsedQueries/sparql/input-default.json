@@ -1,0 +1,74 @@
+{
+  "queryType": "SELECT",
+  "variables": [
+    {
+      "expression": {
+        "termType": "Variable",
+        "value": "_"
+      },
+      "variable": {
+        "termType": "Variable",
+        "value": "book"
+      }
+    },
+    {
+      "termType": "Variable",
+      "value": "title"
+    },
+    {
+      "termType": "Variable",
+      "value": "price"
+    }
+  ],
+  "where": [
+    {
+      "type": "input",
+      "name": "_",
+      "varMap": {
+        "_": {
+          "termType": "Variable",
+          "value": "_"
+        }
+      }
+    },
+    {
+      "type": "bgp",
+      "triples": [
+        {
+          "subject": {
+            "termType": "Variable",
+            "value": "_"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://purl.org/dc/elements/1.1/title"
+          },
+          "object": {
+            "termType": "Variable",
+            "value": "title"
+          }
+        },
+        {
+          "subject": {
+            "termType": "Variable",
+            "value": "_"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://example.org/ns#price"
+          },
+          "object": {
+            "termType": "Variable",
+            "value": "price"
+          }
+        }
+      ]
+    }
+  ],
+  "type": "query",
+  "prefixes": {
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "": "http://example.org/book/",
+    "ns": "http://example.org/ns#"
+  }
+}

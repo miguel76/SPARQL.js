@@ -406,6 +406,7 @@ PNAME_NS              {PN_PREFIX}?":"
 PNAME_LN              {PNAME_NS}{PN_LOCAL}
 BLANK_NODE_LABEL      "_:"(?:{PN_CHARS_U}|[0-9])(?:(?:{PN_CHARS}|".")*{PN_CHARS})?
 VAR                   [\?\$]{VARNAME}
+INPUTNAME             \&{VARNAME}
 LANGTAG               "@"[a-zA-Z]+(?:"-"[a-zA-Z0-9]+)*
 INTEGER               [0-9]+
 DECIMAL               [0-9]*"."[0-9]+
@@ -469,6 +470,7 @@ SPACES_COMMENTS       (\s+|{COMMENT}\n\r?)+
 "LIMIT"                  return 'LIMIT'
 "OFFSET"                 return 'OFFSET'
 "VALUES"                 return 'VALUES'
+"INPUT"                  return 'INPUT'
 ";"                      return ';'
 "LOAD"                   return 'LOAD'
 "SILENT"                 return 'SILENT'
@@ -544,6 +546,7 @@ SPACES_COMMENTS       (\s+|{COMMENT}\n\r?)+
 {PNAME_LN}               return 'PNAME_LN'
 {BLANK_NODE_LABEL}       return 'BLANK_NODE_LABEL'
 {VAR}                    return 'VAR'
+{INPUTNAME}              return 'INPUTNAME'
 {LANGTAG}                return 'LANGTAG'
 {INTEGER}                return 'INTEGER'
 {DECIMAL}                return 'DECIMAL'
@@ -887,6 +890,12 @@ GraphPatternNotTriples
     | 'BIND' '(' Expression 'AS' VAR ')' -> { type: 'bind', variable: toVar($5), expression: $3 }
     | 'BIND' '(' VarTriple 'AS' VAR ')' -> ensureSparqlStar({ type: 'bind', variable: toVar($5), expression: $3 })
     | ValuesClause
+    | 'INPUT' INPUTNAME? '(' InputClauseVar+ ')' -> {type: 'input', name: $2 ? $2.substr(1) : '_', varMap: Object.fromEntries($4.map(varMapping => [varMapping.inputVarname, varMapping.localVar])) }
+    | 'INPUT' INPUTNAME? -> {type: 'input', name: $2 ? $2.substr(1) : '_', varMap: {'_': toVar('?_')} }
+    ;
+InputClauseVar
+    : VAR -> {inputVarname: $1.substr(1), localVar: toVar($1)}
+    | '(' VAR 'AS' VAR ')' -> {inputVarname: $2.substr(1), localVar: toVar($4)}
     ;
 Constraint
     : BrackettedExpression
