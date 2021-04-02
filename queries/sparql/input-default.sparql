@@ -2,9 +2,9 @@ PREFIX dc:   <http://purl.org/dc/elements/1.1/>
 PREFIX :     <http://example.org/book/> 
 PREFIX ns:   <http://example.org/ns#> 
 
-SELECT ?book ?title ?price
+SELECT (?_ AS ?book) ?title ?price
 {
-   &_ .
-   ?book dc:title ?title ;
+   INPUT.
+   ?_ dc:title ?title ;
          ns:price ?price .
 }

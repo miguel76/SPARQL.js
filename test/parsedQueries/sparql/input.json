@@ -2,8 +2,14 @@
   "queryType": "SELECT",
   "variables": [
     {
-      "termType": "Variable",
-      "value": "book"
+      "expression": {
+        "termType": "Variable",
+        "value": "_"
+      },
+      "variable": {
+        "termType": "Variable",
+        "value": "book"
+      }
     },
     {
       "termType": "Variable",
@@ -17,7 +23,13 @@
   "where": [
     {
       "type": "input",
-      "name": "books"
+      "name": "books",
+      "varMap": {
+        "_": {
+          "termType": "Variable",
+          "value": "_"
+        }
+      }
     },
     {
       "type": "bgp",
@@ -25,7 +37,7 @@
         {
           "subject": {
             "termType": "Variable",
-            "value": "book"
+            "value": "_"
           },
           "predicate": {
             "termType": "NamedNode",
@@ -39,7 +51,7 @@
         {
           "subject": {
             "termType": "Variable",
-            "value": "book"
+            "value": "_"
           },
           "predicate": {
             "termType": "NamedNode",

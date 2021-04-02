@@ -2,14 +2,8 @@
   "queryType": "SELECT",
   "variables": [
     {
-      "expression": {
-        "termType": "Variable",
-        "value": "_"
-      },
-      "variable": {
-        "termType": "Variable",
-        "value": "book"
-      }
+      "termType": "Variable",
+      "value": "book"
     },
     {
       "termType": "Variable",
@@ -25,9 +19,13 @@
       "type": "input",
       "name": "_",
       "varMap": {
-        "_": {
+        "text": {
           "termType": "Variable",
-          "value": "_"
+          "value": "book"
+        },
+        "author": {
+          "termType": "Variable",
+          "value": "author"
         }
       }
     },
@@ -37,7 +35,7 @@
         {
           "subject": {
             "termType": "Variable",
-            "value": "_"
+            "value": "book"
           },
           "predicate": {
             "termType": "NamedNode",
@@ -51,7 +49,7 @@
         {
           "subject": {
             "termType": "Variable",
-            "value": "_"
+            "value": "book"
           },
           "predicate": {
             "termType": "NamedNode",

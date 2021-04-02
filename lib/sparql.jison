@@ -814,7 +814,12 @@ GraphPatternNotTriples
     | 'BIND' '(' Expression 'AS' VAR ')' -> { type: 'bind', variable: toVar($5), expression: $3 }
     | 'BIND' '(' VarTriple 'AS' VAR ')' -> ensureSparqlStar({ type: 'bind', variable: toVar($5), expression: $3 })
     | ValuesClause
-    | 'INPUT'? INPUTNAME -> { type: 'input', name: $2.substr(1) }
+    | 'INPUT' INPUTNAME? '(' InputClauseVar+ ')' -> {type: 'input', name: $2 ? $2.substr(1) : '_', varMap: Object.fromEntries($4.map(varMapping => [varMapping.inputVarname, varMapping.localVar])) }
+    | 'INPUT' INPUTNAME? -> {type: 'input', name: $2 ? $2.substr(1) : '_', varMap: {'_': toVar('?_')} }
+    ;
+InputClauseVar
+    : VAR -> {inputVarname: $1.substr(1), localVar: toVar($1)}
+    | '(' VAR 'AS' VAR ')' -> {inputVarname: $2.substr(1), localVar: toVar($4)}
     ;
 Constraint
     : BrackettedExpression
