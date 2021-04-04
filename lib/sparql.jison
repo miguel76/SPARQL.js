@@ -85,13 +85,19 @@
     }
   }
 
-  // If the item is a variable, ensures it starts with a question mark
-  function toVar(variable) {
-    if (variable) {
-      var first = variable[0];
-      if (first === '?' || first === '$') return Parser.factory.variable(variable.substr(1));
+  // If the item is a variable, ensures it starts with a question mark or dollar sign
+  function toVar(varString) {
+    if (varString) {
+      var first = varString[0];
+      if (first === '?' || first === '$') {
+        const variable = Parser.factory.variable(varString.substr(1));
+        if (first === '$') {
+          variable['prefix'] = '$';
+        }
+        return variable;
+      }
     }
-    return variable;
+    return varString;
   }
 
   // Creates an operation with the given name and arguments

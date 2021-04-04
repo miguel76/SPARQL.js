@@ -3,7 +3,8 @@
   "variables": [
     {
       "termType": "Variable",
-      "value": "title"
+      "value": "title",
+      "prefix": "$"
     }
   ],
   "where": [

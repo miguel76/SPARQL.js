@@ -1,6 +1,6 @@
 {
   "name": "sparqljs-input",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "A fork of the SPARQL.js parser for the SPARQL query language (based on version 3.4.1), extended to allow input patterns",
   "author": "Miguel Ceriani <miguel.ceriani@gmail.com>",
   "keywords": [
